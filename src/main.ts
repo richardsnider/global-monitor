@@ -13,7 +13,6 @@ camera.lookAt(scene.position);
 
 var renderer = new THREE.WebGLRenderer({ antialias: true });
 renderer.setSize(innerWidth, innerHeight);
-renderer.setAnimationLoop(animationLoop);
 document.body.appendChild(renderer.domElement);
 
 window.addEventListener("resize", (event) => {
@@ -25,22 +24,40 @@ window.addEventListener("resize", (event) => {
 var controls = new OrbitControls(camera, renderer.domElement);
 controls.enableDamping = true;
 
-const numPoints = 500;
+const numPoints = 100;
+const rnd = 1;
+const increment = Math.PI * (3 - Math.sqrt(5));
 
-function fibonacciSphere(numPoints, point) {
-  var rnd = 1,
-    offset = 2 / numPoints,
-    increment = Math.PI * (3 - Math.sqrt(5));
-
-  var y = point * offset - 1 + offset / 2,
-    r = Math.sqrt(1 - Math.pow(y, 2));
-
-  var phi = ((point + rnd) % numPoints) * increment;
-
-  var x = Math.cos(phi) * r,
-    z = Math.sin(phi) * r;
-
-  return new THREE.Vector3(x, y, z);
+const longitudeLatitudeCoordinates = {
+  "los_angeles": { longitude: -118.2437, latitude: 34.0522 },
+  "new_york": { longitude: -74.0060, latitude: 40.7128 },
+  "london": { longitude: -0.1276, latitude: 51.5074 },
+  "paris": { longitude: 2.3522, latitude: 48.8566 },
+  "tokyo": { longitude: 139.6917, latitude: 35.6895 },
+  "sydney": { longitude: 151.2093, latitude: -33.8688 },
+  "moscow": { longitude: 37.6173, latitude: 55.7558 },
+  "beijing": { longitude: 116.4074, latitude: 39.9042 },
+  "delhi": { longitude: 77.1025, latitude: 28.7041 },
+  "buenos_aires": { longitude: -58.3816, latitude: -34.6037 },
+  "rio_de_janeiro": { longitude: -43.1729, latitude: -22.9068 },
+  "cape_town": { longitude: 18.4241, latitude: -33.9249 },
+  "cairo": { longitude: 31.2357, latitude: 30.0444 },
+  "salt_lake_city": { longitude: -111.8910, latitude: 40.7608 },
+  "anchorage": { longitude: -149.9003, latitude: 61.2181 },
+  "honolulu": { longitude: -157.8583, latitude: 21.3069 },
+  "istanbul": { longitude: 28.9784, latitude: 41.0082 },
+  "miami": { longitude: -80.1918, latitude: 25.7617 },
+  "abuja": { longitude: 7.4951, latitude: 9.0765 },
+  "singapore": { longitude: 103.8198, latitude: 1.3521 },
+  "seattle": { longitude: -122.3321, latitude: 47.6062 },
+  "tapei": { longitude: 121.5654, latitude: 25.0330 },
+  "bridgetown": { longitude: -59.5432, latitude: 13.1132 },
+  "bogota": { longitude: -74.0721, latitude: 4.7110 },
+  "mexico_city": { longitude: -99.1332, latitude: 19.4326 },
+  "bora_bora": { longitude: -151.7500, latitude: -16.5004 },
+  "bermuda": { longitude: -64.7505, latitude: 32.3078 },
+  "fiji": { longitude: 178.0650, latitude: -17.7134 },
+  "toronto": { longitude: -79.3832, latitude: 43.6532 },
 }
 
 var group = new THREE.Group();
@@ -49,23 +66,43 @@ scene.add(group);
 new FontLoader().load('https://unpkg.com/three@0.154.0/examples/fonts/helvetiker_regular.typeface.json', createLabels);
 
 function createLabels(font) {
-  var material = new THREE.MeshBasicMaterial({ color: 'green' }),
+  var material = new THREE.MeshBasicMaterial({ color: 'white' }),
     options = {
       font: font,
-      size: 0.01,
+      size: 0.02,
       height: 0.01,
     };
 
-  for (var i = 0; i < numPoints; ++i) {
-    var geometry = new TextGeometry(`p${i}`, options),
-      mesh = new THREE.Mesh(geometry, material);
-
-    mesh.position.copy(fibonacciSphere(numPoints, i));
-    group.add(mesh);
+  for (let city in longitudeLatitudeCoordinates) {
+    let { longitude, latitude } = longitudeLatitudeCoordinates[city];
+    let vector = getVectorFromLongitudeLatitude(longitude, latitude);
+    let label = new THREE.Mesh(new TextGeometry(city, options), material);
+    let dot = new THREE.Mesh(new THREE.SphereGeometry(0.01, 32, 32), new THREE.MeshBasicMaterial({ color: 'yellow' }));
+    // offset label to the side
+    label.position.copy(vector).multiplyScalar(1.05);
+    dot.position.copy(vector);
+    group.add(label);
+    group.add(dot);
   }
 }
 
-function animationLoop(t) {
+let geometry = new THREE.SphereGeometry(1, 32, 32);
+let material = new THREE.MeshBasicMaterial({ color: 'green', opacity: 0.9, wireframe: true });
+let sphere = new THREE.Mesh(geometry, material);
+scene.add(sphere);
+
+const getVectorFromLongitudeLatitude = (longitude, latitude) => {
+  const phi = (90 - latitude) * Math.PI / 180;
+  const theta = (longitude + 180) * Math.PI / 180;
+
+  return new THREE.Vector3(
+    Math.sin(phi) * Math.cos(theta),
+    Math.cos(phi),
+    Math.sin(phi) * Math.sin(theta)
+  ).multiply(new THREE.Vector3(1, 1, -1));
+}
+
+renderer.setAnimationLoop(function (t) {
   // group.rotation.y = t/3000;
 
   // turn the labels towards the camera
@@ -80,4 +117,4 @@ function animationLoop(t) {
 
   controls.update();
   renderer.render(scene, camera);
-}
+});
