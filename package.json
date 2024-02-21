@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "build:bundle": "npx esbuild src/main.ts --bundle --platform=node --target=chrome58 --sourcemap --loader:.ts=ts --outfile=dist/bundle.js",
+    "build:bundle": "npx esbuild src/main.ts --bundle --minify-whitespace --minify-identifiers --platform=node --target=chrome58 --sourcemap --loader:.ts=ts --outfile=dist/bundle.js",
     "build:html": "cp src/index.html dist/index.html",
     "build:inject": "node scripts/inject-bundle-script.js",
     "build": "npm run build:bundle && npm run build:html && npm run build:inject",
