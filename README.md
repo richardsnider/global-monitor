@@ -1,0 +1,1 @@
+Tutorial: https://discourse.threejs.org/t/how-to-properly-rotate-a-virtual-sphere/54094
