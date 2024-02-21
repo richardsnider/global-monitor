@@ -1,4 +1,3 @@
-
 import * as THREE from "three";
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { TextGeometry } from 'three/examples/jsm/geometries/TextGeometry.js';
@@ -23,10 +22,6 @@ window.addEventListener("resize", (event) => {
 
 var controls = new OrbitControls(camera, renderer.domElement);
 controls.enableDamping = true;
-
-const numPoints = 100;
-const rnd = 1;
-const increment = Math.PI * (3 - Math.sqrt(5));
 
 const longitudeLatitudeCoordinates = {
   "los_angeles": { longitude: -118.2437, latitude: 34.0522 },
@@ -66,19 +61,18 @@ scene.add(group);
 new FontLoader().load('https://unpkg.com/three@0.154.0/examples/fonts/helvetiker_regular.typeface.json', createLabels);
 
 function createLabels(font) {
-  var material = new THREE.MeshBasicMaterial({ color: 'white' }),
-    options = {
-      font: font,
-      size: 0.02,
-      height: 0.01,
-    };
+  let material = new THREE.MeshBasicMaterial({ color: 'white' });
+  let options = {
+    font: font,
+    size: 0.02,
+    height: 0.01,
+  };
 
   for (let city in longitudeLatitudeCoordinates) {
     let { longitude, latitude } = longitudeLatitudeCoordinates[city];
     let vector = getVectorFromLongitudeLatitude(longitude, latitude);
     let label = new THREE.Mesh(new TextGeometry(city, options), material);
     let dot = new THREE.Mesh(new THREE.SphereGeometry(0.01, 32, 32), new THREE.MeshBasicMaterial({ color: 'yellow' }));
-    // offset label to the side
     label.position.copy(vector).multiplyScalar(1.05);
     dot.position.copy(vector);
     group.add(label);
@@ -87,7 +81,7 @@ function createLabels(font) {
 }
 
 let geometry = new THREE.SphereGeometry(1, 32, 32);
-let material = new THREE.MeshBasicMaterial({ color: 'green', opacity: 0.9, wireframe: true });
+let material = new THREE.MeshBasicMaterial({ color: 'green', transparent: true, opacity: 0.2, wireframe: true });
 let sphere = new THREE.Mesh(geometry, material);
 scene.add(sphere);
 
@@ -102,7 +96,23 @@ const getVectorFromLongitudeLatitude = (longitude, latitude) => {
   ).multiply(new THREE.Vector3(1, 1, -1));
 }
 
-renderer.setAnimationLoop(function (t) {
+let missionStatus = document.createElement('div');
+let missionDescription = document.createElement('p');
+missionStatus.appendChild(missionDescription);
+document.body.appendChild(missionStatus);
+
+missionStatus.style.position = 'absolute';
+missionStatus.style.backgroundColor = "black";
+missionStatus.style.opacity = '0.8';
+missionStatus.style.color = "green";
+missionStatus.style.border = "1px solid green";
+missionStatus.style.maxWidth = 500 + 'px';
+missionStatus.style.top = 20 + 'px';
+missionStatus.style.left = 20 + 'px';
+
+missionDescription.style.font = "Courier New";
+
+renderer.setAnimationLoop(function (domTimestamp) {
   // group.rotation.y = t/3000;
 
   // turn the labels towards the camera
@@ -115,6 +125,16 @@ renderer.setAnimationLoop(function (t) {
     );
   }
 
+  if (domTimestamp % 2000 < 16) updateMissionStatus();
+
   controls.update();
   renderer.render(scene, camera);
 });
+
+const updateMissionStatus = () => {
+  let glitchText = '';
+  for (let i = 0; i < 490; i++) {
+    glitchText += String.fromCharCode(0x30A0 + Math.random() * (0x30FF - 0x30A0 + 1));
+  }
+  missionStatus.innerHTML = glitchText;
+}
