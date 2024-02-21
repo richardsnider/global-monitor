@@ -9,7 +9,8 @@
     "build:html": "cp src/index.html dist/index.html",
     "build:inject": "node scripts/inject-bundle-script.js",
     "build": "npm run build:bundle && npm run build:html && npm run build:inject",
-    "start": "tsc src/main.ts && node src/main.js"
+    "start": "tsc src/main.ts && node src/main.js",
+    "publish": "cp dist/index.html index.html"
   },
   "keywords": [],
   "author": "",
