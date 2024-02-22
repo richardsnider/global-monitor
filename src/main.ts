@@ -3,24 +3,25 @@ import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { TextGeometry } from 'three/examples/jsm/geometries/TextGeometry.js';
 import { FontLoader } from 'three/examples/jsm/loaders/FontLoader.js';
 
-var scene = new THREE.Scene();
+const scene = new THREE.Scene();
 scene.background = new THREE.Color('black');
 
-var camera = new THREE.PerspectiveCamera(30, innerWidth / innerHeight);
+const camera = new THREE.PerspectiveCamera(30, innerWidth / innerHeight);
 camera.position.set(0, 0, 5);
 camera.lookAt(scene.position);
 
-var renderer = new THREE.WebGLRenderer({ antialias: true });
+const renderer = new THREE.WebGLRenderer({ antialias: true });
 renderer.setSize(innerWidth, innerHeight);
 document.body.appendChild(renderer.domElement);
 
 window.addEventListener("resize", (event) => {
+  console.log(event);
   camera.aspect = innerWidth / innerHeight;
   camera.updateProjectionMatrix();
   renderer.setSize(innerWidth, innerHeight);
 });
 
-var controls = new OrbitControls(camera, renderer.domElement);
+const controls = new OrbitControls(camera, renderer.domElement);
 controls.enableDamping = true;
 
 const longitudeLatitudeCoordinates = {
@@ -55,7 +56,16 @@ const longitudeLatitudeCoordinates = {
   "toronto": { longitude: -79.3832, latitude: 43.6532 },
 }
 
-var group = new THREE.Group();
+let minLongitude = 1, maxLongitude = 3, minLatitude = 45, maxLatitude = 47;
+
+let url = new URL(window.location.href);
+url.searchParams.set('lomin', minLongitude.toString());
+url.searchParams.set('lomax', maxLongitude.toString());
+url.searchParams.set('lamin', minLatitude.toString());
+url.searchParams.set('lamax', maxLatitude.toString());
+
+
+let group = new THREE.Group();
 scene.add(group);
 
 new FontLoader().load('https://unpkg.com/three@0.154.0/examples/fonts/helvetiker_regular.typeface.json', createLabels);
@@ -101,35 +111,18 @@ let missionDescription = document.createElement('p');
 missionStatus.appendChild(missionDescription);
 document.body.appendChild(missionStatus);
 
-missionStatus.style.position = 'absolute';
-missionStatus.style.backgroundColor = "black";
-missionStatus.style.opacity = '0.8';
-missionStatus.style.color = "green";
-missionStatus.style.border = "1px solid green";
-missionStatus.style.maxWidth = 500 + 'px';
-missionStatus.style.top = 20 + 'px';
-missionStatus.style.left = 20 + 'px';
+Object.assign(missionStatus.style, {
+  position: 'absolute',
+  backgroundColor: "black",
+  opacity: '0.8',
+  color: "green",
+  border: "1px solid green",
+  maxWidth: 500 + 'px',
+  top: 20 + 'px',
+  left: 20 + 'px',
+});
 
 missionDescription.style.font = "Courier New";
-
-renderer.setAnimationLoop(function (domTimestamp) {
-  // group.rotation.y = t/3000;
-
-  // turn the labels towards the camera
-  for (var label of group.children) {
-    label.rotation.set(
-      controls.getPolarAngle() - Math.PI / 2,
-      controls.getAzimuthalAngle() - group.rotation.y,
-      0,
-      'YXZ'
-    );
-  }
-
-  if (domTimestamp % 2000 < 16) updateMissionStatus();
-
-  controls.update();
-  renderer.render(scene, camera);
-});
 
 const updateMissionStatus = () => {
   let glitchText = '';
@@ -138,3 +131,55 @@ const updateMissionStatus = () => {
   }
   missionStatus.innerHTML = glitchText;
 }
+
+const updateData = () => {
+  fetch(`https://opensky-network.org/api/states/all?lamin=${minLatitude}&lomin=${minLongitude}&lamax=${maxLatitude}&lomax=${maxLongitude}`)
+    .then(response => {
+      if (response.ok) return response.json();
+      else throw new Error(`HTTP error: ${response.status}`);
+    })
+    .then(data => {
+      if (data?.states) {
+        for (let state of data.states) {
+          let longitude = state[5];
+          let latitude = state[6];
+          let vector = getVectorFromLongitudeLatitude(longitude, latitude);
+          let dot = new THREE.Mesh(new THREE.SphereGeometry(0.001, 32, 32), new THREE.MeshBasicMaterial({ color: 'red' }));
+          dot.position.copy(vector);
+          group.add(dot);
+        }
+      }
+    });
+};
+
+const turnLabelsTowardsCamera = () => {
+  for (let label of group.children) {
+    label.rotation.set(
+      controls.getPolarAngle() - Math.PI / 2,
+      controls.getAzimuthalAngle() - group.rotation.y,
+      0,
+      'YXZ'
+    );
+  }
+};
+
+renderer.setAnimationLoop(function (domTimestamp) {
+  // group.rotation.y = t/3000;
+
+  turnLabelsTowardsCamera();
+
+  if (domTimestamp % 2000 < 16) { // every 2 seconds
+    updateMissionStatus();
+
+    let url = new URL(window.location.href);
+    minLongitude = parseFloat(url.searchParams.get('lomin') || `${minLongitude}`);
+    maxLongitude = parseFloat(url.searchParams.get('lomax') || `${maxLongitude}`);
+    minLatitude = parseFloat(url.searchParams.get('lamin') || `${minLatitude}`);
+    maxLatitude = parseFloat(url.searchParams.get('lamax') || `${maxLatitude}`);
+
+    // updateData();
+  }
+
+  controls.update();
+  renderer.render(scene, camera);
+});
