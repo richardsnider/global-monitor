@@ -57,12 +57,16 @@ const longitudeLatitudeCoordinates = {
 }
 
 let minLongitude = 1, maxLongitude = 3, minLatitude = 45, maxLatitude = 47;
+let cities = `los_angeles,london`;
 
 let url = new URL(window.location.href);
 url.searchParams.set('lomin', minLongitude.toString());
 url.searchParams.set('lomax', maxLongitude.toString());
 url.searchParams.set('lamin', minLatitude.toString());
 url.searchParams.set('lamax', maxLatitude.toString());
+url.searchParams.set('cities', cities);
+
+let line: THREE.Line<THREE.BufferGeometry<THREE.NormalBufferAttributes>, THREE.LineDashedMaterial, THREE.Object3DEventMap>
 
 
 let group = new THREE.Group();
@@ -163,6 +167,27 @@ const turnLabelsTowardsCamera = () => {
   }
 };
 
+const drawLineBetweenTwoCities = (city1: string, city2: string) => {
+  let { longitude: longitude1, latitude: latitude1 } = longitudeLatitudeCoordinates[city1];
+  let { longitude: longitude2, latitude: latitude2 } = longitudeLatitudeCoordinates[city2];
+  let vector1 = getVectorFromLongitudeLatitude(longitude1, latitude1);
+  let vector2 = getVectorFromLongitudeLatitude(longitude2, latitude2);
+  let curve = new THREE.QuadraticBezierCurve3(
+    vector1,
+    vector1.clone().add(vector2).multiplyScalar(1),
+    vector2
+  );
+  let points = curve.getPoints(50);
+
+  let geometry = new THREE.BufferGeometry().setFromPoints(points);
+  let material = new THREE.LineDashedMaterial({ color: 'yellow', dashSize: 0.01, gapSize: 0.01 });
+  line = new THREE.Line(geometry, material);
+  line.computeLineDistances();
+
+  if (line) scene.remove(line);
+  scene.add(line);
+}
+
 renderer.setAnimationLoop(function (domTimestamp) {
   // group.rotation.y = t/3000;
 
@@ -176,6 +201,9 @@ renderer.setAnimationLoop(function (domTimestamp) {
     maxLongitude = parseFloat(url.searchParams.get('lomax') || `${maxLongitude}`);
     minLatitude = parseFloat(url.searchParams.get('lamin') || `${minLatitude}`);
     maxLatitude = parseFloat(url.searchParams.get('lamax') || `${maxLatitude}`);
+
+    cities = url.searchParams.get('cities') || cities;
+    drawLineBetweenTwoCities(cities.split(',')[0], cities.split(',')[1]);
 
     // updateData();
   }
