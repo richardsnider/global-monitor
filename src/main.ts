@@ -1,7 +1,7 @@
 import * as THREE from "three";
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { TextGeometry } from 'three/examples/jsm/geometries/TextGeometry.js';
-import { FontLoader } from 'three/examples/jsm/loaders/FontLoader.js';
+import { FontLoader, Font } from 'three/examples/jsm/loaders/FontLoader.js';
 
 const scene = new THREE.Scene();
 scene.background = new THREE.Color('black');
@@ -56,7 +56,7 @@ const longitudeLatitudeCoordinates = {
   "toronto": { longitude: -79.3832, latitude: 43.6532 },
 }
 
-let minLongitude = 1, maxLongitude = 3, minLatitude = 45, maxLatitude = 47;
+let minLongitude = -2, maxLongitude = 3, minLatitude = 48, maxLatitude = 52;
 let cities = `los_angeles,london`;
 
 let url = new URL(window.location.href);
@@ -68,13 +68,13 @@ url.searchParams.set('cities', cities);
 
 let line: THREE.Line<THREE.BufferGeometry<THREE.NormalBufferAttributes>, THREE.LineDashedMaterial, THREE.Object3DEventMap>
 
-
 let group = new THREE.Group();
 scene.add(group);
 
-new FontLoader().load('https://unpkg.com/three@0.154.0/examples/fonts/helvetiker_regular.typeface.json', createLabels);
+const fontLoader = new FontLoader();
+fontLoader.load('https://threejsfundamentals.org/threejs/resources/threejs/fonts/helvetiker_regular.typeface.json', createLabels);
 
-function createLabels(font) {
+function createLabels(font: Font) {
   let material = new THREE.MeshBasicMaterial({ color: 'white' });
   let options = {
     font: font,
@@ -140,7 +140,7 @@ const updateData = () => {
   fetch(`https://opensky-network.org/api/states/all?lamin=${minLatitude}&lomin=${minLongitude}&lamax=${maxLatitude}&lomax=${maxLongitude}`)
     .then(response => {
       if (response.ok) return response.json();
-      else throw new Error(`HTTP error: ${response.status}`);
+      else console.error(`${response.url} HTTP-Error: ${response.status}`);
     })
     .then(data => {
       if (data?.states) {
@@ -188,6 +188,8 @@ const drawLineBetweenTwoCities = (city1: string, city2: string) => {
   scene.add(line);
 }
 
+updateData();
+
 renderer.setAnimationLoop(function (domTimestamp) {
   // group.rotation.y = t/3000;
 
@@ -205,7 +207,6 @@ renderer.setAnimationLoop(function (domTimestamp) {
     cities = url.searchParams.get('cities') || cities;
     drawLineBetweenTwoCities(cities.split(',')[0], cities.split(',')[1]);
 
-    // updateData();
   }
 
   controls.update();
