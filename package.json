@@ -8,8 +8,8 @@
     "build:bundle": "npx esbuild src/main.ts --bundle --minify-whitespace --minify-identifiers --platform=node --target=chrome58 --sourcemap --loader:.ts=ts --outfile=dist/bundle.js",
     "build:html": "cp src/index.html dist/index.html",
     "build:inject": "node scripts/inject-bundle-script.js",
-    "build": "npm run build:bundle && npm run build:html && npm run build:inject",
-    "start": "tsc src/main.ts && node src/main.js",
+    "build": "rm -rf dist && npm run build:bundle && npm run build:html && npm run build:inject",
+    "start": "npm run build && npx http-server dist/ -o",
     "publish": "cp dist/index.html index.html"
   },
   "keywords": [],
@@ -22,6 +22,7 @@
     "typescript": "^5.3.3"
   },
   "devDependencies": {
-    "esbuild": "^0.20.1"
+    "esbuild": "^0.20.1",
+    "http-server": "^14.0.0"
   }
 }
