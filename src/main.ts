@@ -25,7 +25,7 @@ import { createLabels } from './text';
   
   const cameraControls = new OrbitControls(camera, renderer.domElement);
   cameraControls.enableDamping = true;
-
+  cameraControls.dampingFactor = 0.1;
   cameraControls.mouseButtons = { LEFT: THREE.MOUSE.PAN };
   document.addEventListener('keyup', (event) => event.shiftKey ? cameraControls.mouseButtons = { LEFT: THREE.MOUSE.ROTATE } : null);
   document.addEventListener('keydown', (event) => event.shiftKey ? cameraControls.mouseButtons = { LEFT: THREE.MOUSE.PAN } : null);
