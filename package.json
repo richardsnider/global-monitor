@@ -10,19 +10,20 @@
     "build:inject": "node scripts/inject-bundle-script.js",
     "build": "rm -rf dist && npm run build:bundle && npm run build:html && npm run build:inject",
     "start": "npm run build && npx http-server dist/ -o",
+    "incognito": "npm run build && gnome-www-browser 127.0.0.1:8080 --incognito && npx http-server dist/",
     "publish": "cp dist/index.html index.html"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "@types/node": "^20.11.19",
-    "@types/three": "^0.161.2",
-    "three": "^0.161.0",
-    "typescript": "^5.3.3"
+    "three": "^0.161.0"
   },
   "devDependencies": {
     "esbuild": "^0.20.1",
-    "http-server": "^14.0.0"
+    "http-server": "^14.0.0",
+    "@types/node": "^20.11.19",
+    "@types/three": "^0.161.2",
+    "typescript": "^5.3.3"
   }
 }

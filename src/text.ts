@@ -1,22 +1,22 @@
 import * as THREE from "three";
-import { TextGeometry } from 'three/examples/jsm/geometries/TextGeometry.js';
-import { FontLoader, Font } from 'three/examples/jsm/loaders/FontLoader.js';
+import { TextGeometry, TextGeometryParameters } from 'three/examples/jsm/geometries/TextGeometry.js';
+import { Font } from 'three/examples/jsm/loaders/FontLoader.js';
 import { coordinates } from './data';
 import { getVectorFromLongitudeLatitude } from './util';
 
 const createLabels = async () => {
-  const fontLoader = new FontLoader();
-  // fontLoader.load('https://threejsfundamentals.org/threejs/resources/threejs/fonts/helvetiker_regular.typeface.json', createLabels);
-  const font = await fontLoader.loadAsync('https://threejsfundamentals.org/threejs/resources/threejs/fonts/helvetiker_regular.typeface.json');
+  // generate typeface.json files from ttf with https://github.com/gero3/facetype.js
+  const jsonData = require('./pixel-coleco-font.json');
+  const font = new Font(jsonData);
 
   let material = new THREE.MeshBasicMaterial({ color: 'white' });
-  let options = {
+  let options: TextGeometryParameters = {
     font: font,
-    size: 0.02,
-    height: 0.01,
+    size: 0.03,
+    height: 0,
   };
 
-  const dotLabels = new THREE.Group();
+  const dotLabelGroup = new THREE.Group();
   for (let city in coordinates) {
     let { longitude, latitude } = coordinates[city];
     let vector = getVectorFromLongitudeLatitude(longitude, latitude);
@@ -24,11 +24,11 @@ const createLabels = async () => {
     let dot = new THREE.Mesh(new THREE.SphereGeometry(0.01, 32, 32), new THREE.MeshBasicMaterial({ color: 'yellow' }));
     label.position.copy(vector).multiplyScalar(1.05);
     dot.position.copy(vector);
-    dotLabels.add(label);
-    dotLabels.add(dot);
+    dotLabelGroup.add(dot);
+    dotLabelGroup.add(label);
   }
 
-  return dotLabels;
+  return dotLabelGroup;
 }
 
 export { createLabels };
