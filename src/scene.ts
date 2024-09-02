@@ -1,10 +1,12 @@
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
-// import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
-// import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
-// import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
-// import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
+import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
+import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
+import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
+import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
+import { getSetting } from './gui';
 import { createLabels } from './text';
+import { createVesselsGroup } from './vessels';
 import { turnLabelsTowardsCamera, drawLineBetweenTwoCities, updateData } from './util';
 import { updateMissionStatus } from './console';
 
@@ -14,6 +16,8 @@ let camera: THREE.PerspectiveCamera;
 let orbitControls: OrbitControls;
 let renderer: THREE.WebGLRenderer;
 let groups: Record<string, THREE.Group> = {};
+let bloomPass: UnrealBloomPass;
+let composer: EffectComposer;
 
 const initScene = async () => {
   scene = new THREE.Scene();
@@ -36,19 +40,20 @@ const initScene = async () => {
 
   renderer.setAnimationLoop(animate);
 
-  // const renderScene = new RenderPass( scene, camera );
-  // const bloomPass = new UnrealBloomPass( new THREE.Vector2( window.innerWidth, window.innerHeight ), 1.5, 0.4, 0.85 );
-  // const outputPass = new OutputPass();
+  const renderScene = new RenderPass( scene, camera );
+  bloomPass = new UnrealBloomPass( new THREE.Vector2( window.innerWidth, window.innerHeight ), 1.5, 0.4, 0.85 );
+  const outputPass = new OutputPass();
 
-  // const composer = new EffectComposer( renderer );
-  // composer.addPass( renderScene );
-  // composer.addPass( bloomPass );
-  // composer.addPass( outputPass );
+  composer = new EffectComposer( renderer );
+  composer.addPass( renderScene );
+  composer.addPass( bloomPass );
+  composer.addPass( outputPass );
 
   window.addEventListener("resize", onWindowResize);
-
   groups['dotLabelGroup'] = await createLabels();
-  scene.add(groups['dotLabelGroup'])
+  groups['vesselsGroup'] = await createVesselsGroup();
+
+  for (let key in groups) { scene.add(groups[key]); }
 }
 
 const onWindowResize: EventListener = (event) => {
@@ -57,7 +62,6 @@ const onWindowResize: EventListener = (event) => {
   camera.updateProjectionMatrix();
   renderer.setSize(innerWidth, innerHeight);
 }
-
 
 const animate = (domTimestamp) => {
   // group.rotation.y = t/3000;
@@ -77,11 +81,10 @@ const animate = (domTimestamp) => {
   }
 
   orbitControls.update();
+  bloomPass.strength = getSetting('bloom', 'strength');
+  bloomPass.radius = getSetting('bloom', 'radius');
   renderer.render(scene, camera);
-  // bloomPass.strength = getSetting('bloom', 'strength');
-  // bloomPass.radius = getSetting('bloom', 'radius');
-  // renderer.render(scene, camera);
-  // composer.render();
+  composer.render();
 }
 
 export { initScene, scene, camera, renderer };
