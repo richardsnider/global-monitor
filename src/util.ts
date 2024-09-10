@@ -54,9 +54,9 @@ const updateData = async () => {
   }
 };
 
-const turnLabelsTowardsCamera = (group : THREE.Group, controls : OrbitControls) => {
-  for (let label of group.children) {
-    label.rotation.set(
+const turnTowardsCamera = (group : THREE.Group, controls : OrbitControls) => {
+  for (let object of group.children) {
+    object.rotation.set(
       controls.getPolarAngle() - Math.PI / 2,
       controls.getAzimuthalAngle() - group.rotation.y,
       0,
@@ -65,4 +65,13 @@ const turnLabelsTowardsCamera = (group : THREE.Group, controls : OrbitControls) 
   }
 };
 
-export { getVectorFromLongitudeLatitude, drawLineBetweenTwoCities, turnLabelsTowardsCamera, updateData };
+const queryGroupObjects = (group : THREE.Group, predicate : (object : THREE.Object3D) => boolean) => {
+  let objects: THREE.Object3D[] = [];
+  for (let object of group.children) {
+    if (predicate(object)) objects.push(object);
+  }
+
+  return objects;
+}
+
+export { getVectorFromLongitudeLatitude, drawLineBetweenTwoCities, turnTowardsCamera, updateData };
